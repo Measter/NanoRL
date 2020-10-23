@@ -21,3 +21,6 @@ After that it was the same commands used by the Arduino IDE to upload:
     avr-objcopy -O ihex -R .eeprom .\target\avr-atmega328p\release\nano_rl.elf .\target\avr-atmega328p\release\nano_rl.hex
     avrdude -C<path/to/>/avrdude.conf -v -patmega328p -carduino -PCOM4 -b57600 -D -Uflash:w:.\target\avr-atmega328p\release\nano_rl.hex:i
 
+## License
+
+As the TWI and delay_microseconds implementations are based on the Arduino library, I'm using the same license as that does: LGPL 2.1.
