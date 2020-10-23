@@ -23,4 +23,4 @@ After that it was the same commands used by the Arduino IDE to upload:
 
 ## License
 
-As the TWI and delay_microseconds implementations are based on the Arduino library, I'm using the same license as that does: LGPL 2.1.
+As the TWI and delay_microseconds implementations are based on the Arduino library those files are specifically licensed under LGPL 2.1.
