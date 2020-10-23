@@ -1,0 +1,21 @@
+[package]
+name = "nano_rl"
+version = "0.1.0"
+authors = ["Stuart Haidon <serayen.sh@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.release]
+opt-level = "s"
+panic = "abort"
+codegen-units = 1
+lto="fat"
+
+[dependencies]
+derive_more = "0.99.9"
+
+[build-dependencies.image]
+version = "0.23"
+default-features = false
+features = ["png"]
