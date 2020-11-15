@@ -49,9 +49,11 @@ fn main() {
     )
     .unwrap();
 
+    writeln!(&mut file, "use crate::hal::progmem::PGMSlice;").unwrap();
+
     for (name, tile) in TILES.iter().zip(tiles) {
         writeln!(&mut file, "#[link_section = \".text\"]").unwrap();
-        write!(&mut file, "pub static {}: [u8; {}] = [", name, tile.len()).unwrap();
+        write!(&mut file, "static {}_DATA: [u8; {}] = [", name, tile.len()).unwrap();
 
         // Fortunately, rust doesn't care about trailing commas!
         for b in tile {
@@ -59,10 +61,25 @@ fn main() {
         }
 
         writeln!(&mut file, "];").unwrap();
+        write_getter(&mut file, name);
     }
 
     write_splash(&mut file, "TITLE_SCREEN", "title_screen.png");
     write_splash(&mut file, "GAME_OVER", "game_over.png");
+}
+
+fn write_getter(file: &mut BufWriter<File>, name: &str) {
+    writeln!(
+        file,
+        "
+    #[allow(non_snake_case)]
+    #[inline(always)]
+    pub fn {0}() -> PGMSlice {{
+        unsafe {{ PGMSlice::from_raw_parts(&{0}_DATA as *const u8, {0}_DATA.len()) }}
+    }}",
+        name
+    )
+    .unwrap();
 }
 
 fn write_splash(file: &mut BufWriter<File>, splash_name: &str, filename: &str) {
@@ -71,7 +88,7 @@ fn write_splash(file: &mut BufWriter<File>, splash_name: &str, filename: &str) {
     writeln!(file, "#[link_section = \".text\"]").unwrap();
     writeln!(
         file,
-        "pub static {}: [u8; {}] = [",
+        "static {}_DATA: [u8; {}] = [",
         splash_name,
         title_screen.len()
     )
@@ -87,6 +104,7 @@ fn write_splash(file: &mut BufWriter<File>, splash_name: &str, filename: &str) {
     }
 
     writeln!(file, "];").unwrap();
+    write_getter(file, splash_name);
 }
 
 fn process_splash(filename: &str) -> Vec<u8> {

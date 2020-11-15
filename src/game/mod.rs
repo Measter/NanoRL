@@ -39,15 +39,13 @@ pub enum Tile {
 
 impl Tile {
     pub fn graphic(self) -> PGMSlice {
-        let (addr, len) = match self {
-            Tile::Floor => (&tiles::FLOOR as *const u8, tiles::FLOOR.len()),
-            Tile::Wall => (&tiles::WALL as *const u8, tiles::WALL.len()),
-            Tile::Stairs => (&tiles::STAIRS as *const u8, tiles::STAIRS.len()),
-            Tile::Player => (&tiles::PLAYER as *const u8, tiles::PLAYER.len()),
-            Tile::Enemy => (&tiles::ENEMY as *const u8, tiles::ENEMY.len()),
-        };
-
-        unsafe { PGMSlice::from_raw_parts(addr, len) }
+        match self {
+            Tile::Floor => tiles::FLOOR(),
+            Tile::Wall => tiles::WALL(),
+            Tile::Stairs => tiles::STAIRS(),
+            Tile::Player => tiles::PLAYER(),
+            Tile::Enemy => tiles::ENEMY(),
+        }
     }
 }
 
@@ -92,31 +90,27 @@ pub struct Game {
 
 impl Game {
     pub fn title_screen() -> PGMSlice {
-        unsafe {
-            PGMSlice::from_raw_parts(&tiles::TITLE_SCREEN as *const u8, tiles::TITLE_SCREEN.len())
-        }
+        tiles::TITLE_SCREEN()
     }
 
     pub fn game_over_screen() -> PGMSlice {
-        unsafe { PGMSlice::from_raw_parts(&tiles::GAME_OVER as *const u8, tiles::GAME_OVER.len()) }
+        tiles::GAME_OVER()
     }
 
     pub fn get_digit_tile(digit: u8) -> PGMSlice {
-        let (ptr, len) = match digit {
-            b'9' => (&tiles::N9 as *const u8, tiles::N9.len()),
-            b'8' => (&tiles::N8 as *const u8, tiles::N8.len()),
-            b'7' => (&tiles::N7 as *const u8, tiles::N7.len()),
-            b'6' => (&tiles::N6 as *const u8, tiles::N6.len()),
-            b'5' => (&tiles::N5 as *const u8, tiles::N5.len()),
-            b'4' => (&tiles::N4 as *const u8, tiles::N4.len()),
-            b'3' => (&tiles::N3 as *const u8, tiles::N3.len()),
-            b'2' => (&tiles::N2 as *const u8, tiles::N2.len()),
-            b'1' => (&tiles::N1 as *const u8, tiles::N1.len()),
-            b'0' => (&tiles::N0 as *const u8, tiles::N0.len()),
-            _ => (&tiles::FLOOR as *const u8, tiles::FLOOR.len()),
-        };
-
-        unsafe { PGMSlice::from_raw_parts(ptr, len) }
+        match digit {
+            b'9' => tiles::N9(),
+            b'8' => tiles::N8(),
+            b'7' => tiles::N7(),
+            b'6' => tiles::N6(),
+            b'5' => tiles::N5(),
+            b'4' => tiles::N4(),
+            b'3' => tiles::N3(),
+            b'2' => tiles::N2(),
+            b'1' => tiles::N1(),
+            b'0' => tiles::N0(),
+            _ => tiles::FLOOR(),
+        }
     }
 
     pub fn new() -> Self {
