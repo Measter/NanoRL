@@ -93,10 +93,9 @@ impl Display {
         Ok(())
     }
 
-    pub fn draw_tile<T: ByteBundle>(
+    pub fn set_draw_coords(
         &mut self,
         twi: &mut twi::TWI,
-        tile: &T,
         x: u8,
         y: u8,
     ) -> Result<(), twi::TWIError> {
@@ -104,12 +103,19 @@ impl Display {
             SSD1306_COMMAND,
             SSD1306_PAGEADDR,
             y, // Page start address
-            y, // Page end
+            7, // Page end
             SSD1306_COLUMNADDR,
-            x * 8,       // Column start address
-            (x * 8 + 7), // Column end address
+            x * 8,     // Column start address
+            WIDTH - 1, // Column end address
         ];
-        twi.write(commands.as_ref())?;
+        twi.write(commands.as_ref())
+    }
+
+    pub fn draw_tile<T: ByteBundle>(
+        &mut self,
+        twi: &mut twi::TWI,
+        tile: &T,
+    ) -> Result<(), twi::TWIError> {
         twi.write(tile)
     }
 }

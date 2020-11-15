@@ -105,9 +105,10 @@ fn run() -> Result<(), ErrorKind> {
         let level = game.level();
         let numbers = format_u8(level);
 
-        for (x, digit) in numbers.iter().enumerate().filter(|(_, d)| **d != b'0') {
+        display.set_draw_coords(&mut twi, 10, 5)?;
+        for digit in numbers.iter().filter(|d| **d != b'0') {
             let tile = Game::get_digit_tile(*digit);
-            display.draw_tile(&mut twi, &tile, x as u8 + 10, 5)?;
+            display.draw_tile(&mut twi, &tile)?;
         }
 
         // Wait for player to press button

@@ -227,23 +227,23 @@ impl Game {
             .0
             .chunks_exact(LEVEL_SIZE)
             .skip(offset_y)
-            .zip(0..)
             .take(SCREEN_HEIGHT);
 
-        for (row, y) in rows {
-            for (tile, x) in row.iter().skip(offset_x).zip(0..).take(SCREEN_WIDTH) {
-                display.draw_tile(twi, &tile.graphic(), x, y)?;
+        display.set_draw_coords(twi, 0, 0)?;
+        for row in rows {
+            for tile in row.iter().skip(offset_x).take(SCREEN_WIDTH) {
+                display.draw_tile(twi, &tile.graphic())?;
             }
         }
 
         // Rather than check every single iteration above whether we need to draw
         // the player and enemies, we'll just re-draw those tiles.
-        display.draw_tile(
+        display.set_draw_coords(
             twi,
-            &Tile::Player.graphic(),
             self.player_pos.x - offset_x as u8,
             self.player_pos.y - offset_y as u8,
         )?;
+        display.draw_tile(twi, &Tile::Player.graphic())?;
 
         // The player is always on screen, so no fancy logic was needed. But for the enemies
         // we need to filter out those that aren't on screen.
@@ -252,12 +252,12 @@ impl Game {
                 && (offset_y as u8..(offset_y + SCREEN_HEIGHT) as u8).contains(&e.position.y)
         });
         for e in enemies {
-            display.draw_tile(
+            display.set_draw_coords(
                 twi,
-                &Tile::Enemy.graphic(),
                 e.position.x - offset_x as u8,
                 e.position.y - offset_y as u8,
             )?;
+            display.draw_tile(twi, &Tile::Enemy.graphic())?;
         }
 
         Ok(())
