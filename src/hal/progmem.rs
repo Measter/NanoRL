@@ -33,7 +33,7 @@ impl ByteBundle for [u8] {
 /// Represents a slice of bytes stored in the PROGMEM memory space.
 ///
 /// Runtime representation should be basically the same as a slice. I chose not to include
-/// a lifetime because any data used with this will be in PROGMEM, and therefore always 
+/// a lifetime because any data used with this will be in PROGMEM, and therefore always
 /// 'static.
 #[derive(Copy, Clone)]
 pub struct PGMSlice {
@@ -44,10 +44,7 @@ pub struct PGMSlice {
 impl PGMSlice {
     // SAFETY: The input pointer MUST be pointing at PROGMEM, not RAM.
     pub const unsafe fn from_raw_parts(addr: *const u8, len: usize) -> Self {
-        Self {
-            addr,
-            len,
-        }
+        Self { addr, len }
     }
 
     pub const fn len(&self) -> usize {
@@ -57,7 +54,7 @@ impl PGMSlice {
     pub fn chunks(&self, len: usize) -> PGMChunks {
         PGMChunks {
             slice: *self,
-            chunk_len: len
+            chunk_len: len,
         }
     }
 }
@@ -74,7 +71,7 @@ impl ByteBundle for PGMSlice {
             let addr = self.addr.offset(idx) as usize;
             let out;
 
-            llvm_asm!{
+            llvm_asm! {
                 "lpm $0, Z"
                 : "=r"(out)
                 : "{r31}"(addr >> 8),"{r30}"(addr)
@@ -101,7 +98,7 @@ pub struct PGMChunks {
 
 impl Iterator for PGMChunks {
     type Item = PGMSlice;
-    
+
     fn next(&mut self) -> Option<Self::Item> {
         if self.slice.len == 0 {
             None
@@ -117,7 +114,7 @@ impl Iterator for PGMChunks {
             // for the chunk we just removed.
             unsafe {
                 let offset = self.chunk_len as isize;
-                
+
                 self.slice.addr = self.slice.addr.offset(offset);
                 self.slice.len -= self.chunk_len;
             }

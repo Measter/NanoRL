@@ -12,7 +12,7 @@ use crate::hal::register::Register;
 pub mod registers {
     reg! {
         /// Port B Data Register
-        PORTB: u8 { 
+        PORTB: u8 {
             addr: 0x25,
             write mask: 0xFF,
             bits: {
@@ -29,7 +29,7 @@ pub mod registers {
     }
     reg! {
         /// Port B Data Direction Register
-        DDRB: u8 { 
+        DDRB: u8 {
             addr: 0x24,
             write mask: 0xFF,
             bits: {
@@ -46,7 +46,7 @@ pub mod registers {
     }
     reg! {
         /// Port B Input Pins Register
-        PINB: u8 { 
+        PINB: u8 {
             addr: 0x23,
             write mask: 0xFF,
             bits: {
@@ -61,7 +61,7 @@ pub mod registers {
             }
         }
     }
-    
+
     reg! {
         /// Port C Data Register
         PORTC: u8 {
@@ -80,7 +80,7 @@ pub mod registers {
     }
     reg! {
         /// Port C Data Direction Register
-        DDRC: u8 { 
+        DDRC: u8 {
             addr: 0x27,
             write mask: 0x7F,
             bits: {
@@ -96,7 +96,7 @@ pub mod registers {
     }
     reg! {
         /// Port C Input Pins Register
-        PINC: u8 { 
+        PINC: u8 {
             addr: 0x26,
             write mask: 0x7F,
             bits: {
@@ -110,10 +110,10 @@ pub mod registers {
             }
         }
     }
-    
+
     reg! {
         /// Port D Data Register
-        PORTD:  u8 { 
+        PORTD:  u8 {
             addr: 0x2B,
             write mask: 0xFF,
             bits: {
@@ -130,7 +130,7 @@ pub mod registers {
     }
     reg! {
         /// Port D Data Direction Register
-        DDRD:   u8 { 
+        DDRD:   u8 {
             addr: 0x2A,
             write mask: 0xFF,
             bits: {
@@ -147,7 +147,7 @@ pub mod registers {
     }
     reg! {
         /// Port D Input Pins Register
-        PIND:   u8 { 
+        PIND:   u8 {
             addr: 0x29,
             write mask: 0xFF,
             bits: {
@@ -292,7 +292,7 @@ pub trait Port {
     type PIN: Register<DataType = u8>;
 
     /// Sets the DDR and PORT registers to the appropriate values for the given pin mode.
-    /// 
+    ///
     /// Does not alter the PORT value when set to Output.
     fn set_pin_mode(pin: Self::ValidPins, mode: PinMode) {
         unsafe {
@@ -300,11 +300,11 @@ pub trait Port {
             match mode {
                 PinMode::Output => {
                     set_reg_bit::<Self::DDR>(bit);
-                },
+                }
                 PinMode::Input => {
                     set_reg_bit::<Self::DDR>(bit);
                     clear_reg_bit::<Self::PORT>(bit);
-                },
+                }
                 PinMode::InputPullup => {
                     set_reg_bit::<Self::DDR>(pin.bit());
                     set_reg_bit::<Self::PORT>(bit);
@@ -338,9 +338,7 @@ pub trait Port {
 
     /// Reads from the PIN register, returning the current state of the pin.
     fn get_pin_state(pin: Self::ValidPins) -> bool {
-        unsafe {
-            get_reg_bit::<Self::PIN>(pin.bit())
-        }
+        unsafe { get_reg_bit::<Self::PIN>(pin.bit()) }
     }
 }
 

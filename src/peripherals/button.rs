@@ -1,6 +1,6 @@
 use crate::hal::{
-    ports::{Port, PinMode},
     clock::Instant,
+    ports::{PinMode, Port},
 };
 
 const DEBOUNCE_TIME: u16 = 2;
@@ -23,7 +23,7 @@ impl<PinPort: Port> Button<PinPort> {
             is_pressed: false,
             had_state_change: false,
             last_press_time: Default::default(),
-            pin
+            pin,
         }
     }
 
@@ -39,9 +39,11 @@ impl<PinPort: Port> Button<PinPort> {
 
         let time_dif = cur_time.elapsed(self.last_press_time);
         // If the the switch is open, but our current state is closed, then we need to update.
-        // Likewise, if the switch is closed, and our current state is open, and we've given time for the 
+        // Likewise, if the switch is closed, and our current state is open, and we've given time for the
         // button to stop bouncing, then we need to update.
-        if (!cur_pressed && self.is_pressed) || (cur_pressed && !self.is_pressed && time_dif >= DEBOUNCE_TIME) {
+        if (!cur_pressed && self.is_pressed)
+            || (cur_pressed && !self.is_pressed && time_dif >= DEBOUNCE_TIME)
+        {
             self.is_pressed = cur_pressed;
             self.last_press_time = cur_time;
             self.had_state_change = true;

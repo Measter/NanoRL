@@ -1,7 +1,7 @@
 //! A basic USART implementation to enable sending serial data for debugging.
 
 #![allow(dead_code)]
-use crate::hal::{CPU_FREQ, register::Register};
+use crate::hal::{register::Register, CPU_FREQ};
 use core::marker::PhantomData;
 
 pub mod registers {
@@ -65,7 +65,7 @@ pub mod registers {
         }
     }
 
-    reg!{
+    reg! {
         /// USART 0 Control and Status Register C
         UCSR0C: u8 {
             addr: 0xC2,
@@ -114,12 +114,12 @@ static mut HAS_INIT: bool = false;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum USARTError {
-    InitError
+    InitError,
 }
 
 /// Provides an interface to the USART.
 ///
-/// implements the minimum needed to synchronously send data to a host PC, and is intended 
+/// implements the minimum needed to synchronously send data to a host PC, and is intended
 /// for debugging.
 ///
 /// Configured for:
@@ -140,7 +140,7 @@ impl USART {
             } else {
                 // Set our baud rate.
                 UBRR0::set_raw_value(UBBR_VAL);
-        
+
                 // Configure for:
                 // * 2x speed
                 // * 8-bit characters
@@ -161,12 +161,12 @@ impl USART {
     pub fn send_byte(&mut self, data: u8) {
         unsafe {
             // Wait for the data register to become available.
-            while !UCSR0A::get_bit(UCSR0A::UDRE0) { }
-    
+            while !UCSR0A::get_bit(UCSR0A::UDRE0) {}
+
             UDR0::set_raw_value(data);
         }
     }
-    
+
     pub fn send<T: AsRef<[u8]>>(&mut self, data: T) {
         fn inner(usart: &mut USART, data: &[u8]) {
             data.iter().for_each(|&b| usart.send_byte(b));

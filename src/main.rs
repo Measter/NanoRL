@@ -2,17 +2,17 @@
 #![no_main]
 #![feature(lang_items, llvm_asm, abi_avr_interrupt)]
 
-mod no_std_stuff;
 mod hal;
+mod no_std_stuff;
 mod peripherals;
 use peripherals::display::Display;
 mod game;
-use game::{Game, ContinueState, Input, rng::Rng};
+use game::{rng::Rng, ContinueState, Game, Input};
 
-use hal:: {
+use hal::{
+    clock::{self, ClockError},
     twi,
     usart::{self, USARTError},
-    clock::{self, ClockError},
 };
 
 use derive_more::From;
@@ -28,9 +28,9 @@ const DISPLAY_ADDR: u8 = 0x3C;
 #[allow(dead_code)]
 fn format_u8(val: u8) -> [u8; 3] {
     [
-        (val / 100)     + b'0',
+        (val / 100) + b'0',
         (val / 10) % 10 + b'0',
-        (val % 10)      + b'0',
+        (val % 10) + b'0',
     ]
 }
 
@@ -46,9 +46,9 @@ fn run() -> Result<(), ErrorKind> {
     hal::enable_interrupts();
 
     let clock = clock::Clock::init()?;
-    
+
     let mut _usart = usart::USART::init()?;
-    
+
     let mut twi = twi::TWI::init()?;
     twi.set_address(DISPLAY_ADDR)?;
     let mut display = Display::init(&mut twi)?;
@@ -88,7 +88,7 @@ fn run() -> Result<(), ErrorKind> {
                         game.draw(&mut display, &mut twi)?;
                         continue;
                     }
-                    ContinueState::Continue => {},
+                    ContinueState::Continue => {}
                     ContinueState::GameOver => break,
 
                     // Happens if the player tries walking into a wall.
@@ -123,17 +123,17 @@ fn run() -> Result<(), ErrorKind> {
 }
 
 #[no_mangle]
-pub extern fn main() {
+pub extern "C" fn main() {
     match run() {
-        Err(ErrorKind::TWI(twi::TWIError::BufferLenError))      => hal::blink_error_code(1),
-        Err(ErrorKind::TWI(twi::TWIError::SendAddressNACK))     => hal::blink_error_code(2),
-        Err(ErrorKind::TWI(twi::TWIError::SendDataNACK))        => hal::blink_error_code(3),
-        Err(ErrorKind::TWI(twi::TWIError::NotReady))            => hal::blink_error_code(4),
-        Err(ErrorKind::TWI(twi::TWIError::BusError))            => hal::blink_error_code(5),
-        Err(ErrorKind::TWI(twi::TWIError::InitError))           => hal::blink_error_code(6),
-        Err(ErrorKind::TWI(twi::TWIError::InvalidAddress))      => hal::blink_error_code(7),
-        Err(ErrorKind::USART(USARTError::InitError))            => hal::blink_error_code(8),
-        Err(ErrorKind::Clock(ClockError::InitError))            => hal::blink_error_code(9),
-        Ok(()) => {},
+        Err(ErrorKind::TWI(twi::TWIError::BufferLenError)) => hal::blink_error_code(1),
+        Err(ErrorKind::TWI(twi::TWIError::SendAddressNACK)) => hal::blink_error_code(2),
+        Err(ErrorKind::TWI(twi::TWIError::SendDataNACK)) => hal::blink_error_code(3),
+        Err(ErrorKind::TWI(twi::TWIError::NotReady)) => hal::blink_error_code(4),
+        Err(ErrorKind::TWI(twi::TWIError::BusError)) => hal::blink_error_code(5),
+        Err(ErrorKind::TWI(twi::TWIError::InitError)) => hal::blink_error_code(6),
+        Err(ErrorKind::TWI(twi::TWIError::InvalidAddress)) => hal::blink_error_code(7),
+        Err(ErrorKind::USART(USARTError::InitError)) => hal::blink_error_code(8),
+        Err(ErrorKind::Clock(ClockError::InitError)) => hal::blink_error_code(9),
+        Ok(()) => {}
     }
 }

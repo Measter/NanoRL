@@ -1,13 +1,21 @@
 use core::{
-    ops::{BitAnd, BitOr, BitOrAssign, Shl, Not},
     marker::PhantomData,
+    ops::{BitAnd, BitOr, BitOrAssign, Not, Shl},
 };
 
 /// Used to restrict what data types a register can be.
 ///
 /// The registers on the 328P are only 8- or 16-bit, so it will only be implement
 /// for `u8` and `u16`.
-pub trait RegisterType: Copy + BitAnd<Output=Self> + BitOr<Output=Self> + Shl<Output=Self> + Not<Output=Self> + Eq + PartialEq {
+pub trait RegisterType:
+    Copy
+    + BitAnd<Output = Self>
+    + BitOr<Output = Self>
+    + Shl<Output = Self>
+    + Not<Output = Self>
+    + Eq
+    + PartialEq
+{
     const ZERO: Self;
     const ONE: Self;
 }
@@ -33,7 +41,6 @@ pub struct Writable;
 impl Access for Writable {}
 pub struct NotWritable;
 impl Access for NotWritable {}
-
 
 /// This allows us to say that access is only allowed if both bits have that access.
 /// It is, essentially, a boolean AND operation, hence the name.
@@ -80,9 +87,9 @@ pub trait Bit {
 
 /// The BitBuilder allows the user to write expressions like `Bit1 | Bit2` to build up a bit pattern, while
 /// still retaining the connection to the register and the restrictions on read/write access.
-pub struct BitBuilder<Reg: Register, R: Access, W: Access>{
+pub struct BitBuilder<Reg: Register, R: Access, W: Access> {
     data: Reg::DataType,
-    _p: PhantomData<(Reg, R, W)>
+    _p: PhantomData<(Reg, R, W)>,
 }
 
 impl<Reg: Register> BitBuilder<Reg, Readable, Writable> {
@@ -95,7 +102,7 @@ impl<Reg: Register> BitBuilder<Reg, Readable, Writable> {
     }
 }
 
-impl <Reg: Register, R: Access, W: Access> BitBuilder<Reg, R, W> {
+impl<Reg: Register, R: Access, W: Access> BitBuilder<Reg, R, W> {
     pub fn raw_value(&self) -> Reg::DataType {
         self.data
     }
@@ -106,19 +113,16 @@ impl <Reg: Register, R: Access, W: Access> BitBuilder<Reg, R, W> {
 /// E.g. A BitBuilder with read/write access being ORed with one with only read access will result in a BitBuilder
 /// with only read access.
 impl<Reg, R1, W1, R2, W2> BitOr<BitBuilder<Reg, R2, W2>> for BitBuilder<Reg, R1, W1>
-    where R1: Access,
-          R2: Access,
-          W1: Access,
-          W2: Access,
-          Reg: Register,
-          R2: AccessAnd<R1>,
-          W2: AccessAnd<W1>,
+where
+    R1: Access,
+    R2: Access,
+    W1: Access,
+    W2: Access,
+    Reg: Register,
+    R2: AccessAnd<R1>,
+    W2: AccessAnd<W1>,
 {
-    type Output = BitBuilder<
-        Reg,
-        <R2 as AccessAnd<R1>>::Output,
-        <W2 as AccessAnd<W1>>::Output
-    >;
+    type Output = BitBuilder<Reg, <R2 as AccessAnd<R1>>::Output, <W2 as AccessAnd<W1>>::Output>;
 
     fn bitor(self, rhs: BitBuilder<Reg, R2, W2>) -> Self::Output {
         BitBuilder {
@@ -131,17 +135,18 @@ impl<Reg, R1, W1, R2, W2> BitOr<BitBuilder<Reg, R2, W2>> for BitBuilder<Reg, R1,
 /// This just lets us OR a BitBuilder with a Bit from the same register. As with above, the most restrictive access
 /// applies.
 impl<Reg, R1, W1, B> BitOr<B> for BitBuilder<Reg, R1, W1>
-    where R1: Access,
-          W1: Access,
-          Reg: Register,
-          B: Bit<Register=Reg>,
-          B::ReadAccess: AccessAnd<R1>,
-          B::WriteAccess: AccessAnd<W1>,
+where
+    R1: Access,
+    W1: Access,
+    Reg: Register,
+    B: Bit<Register = Reg>,
+    B::ReadAccess: AccessAnd<R1>,
+    B::WriteAccess: AccessAnd<W1>,
 {
     type Output = BitBuilder<
         Reg,
         <B::ReadAccess as AccessAnd<R1>>::Output,
-        <B::WriteAccess as AccessAnd<W1>>::Output
+        <B::WriteAccess as AccessAnd<W1>>::Output,
     >;
     // Shut up, clippy, I know it's complex!
 
@@ -166,10 +171,11 @@ impl<Reg, R1, W1, B> BitOr<B> for BitBuilder<Reg, R1, W1>
 /// The restriction is that both read and write access of the new bit must exactly match the access of the BitBuilder
 /// as it can't alter the return type.
 impl<Reg, R1, W1, B> BitOrAssign<B> for BitBuilder<Reg, R1, W1>
-    where R1: Access,
-          W1: Access,
-          Reg: Register,
-          B: Bit<Register=Reg, ReadAccess=R1, WriteAccess=W1>,
+where
+    R1: Access,
+    W1: Access,
+    Reg: Register,
+    B: Bit<Register = Reg, ReadAccess = R1, WriteAccess = W1>,
 {
     fn bitor_assign(&mut self, rhs: B) {
         self.data = self.data | (Reg::DataType::ONE << rhs.bit_id());
@@ -199,9 +205,10 @@ pub trait SetValueType {
 }
 
 impl<Reg, R, W> SetValueType for BitBuilder<Reg, R, W>
-    where Reg: Register,
-          R: Access,
-          W: Access,
+where
+    Reg: Register,
+    R: Access,
+    W: Access,
 {
     type Register = Reg;
     type WriteAccess = W;
@@ -230,7 +237,8 @@ pub trait Register: Sized {
     }
 
     unsafe fn set_value<V>(val: V)
-        where V: SetValueType<Register=Self, WriteAccess=Writable>
+    where
+        V: SetValueType<Register = Self, WriteAccess = Writable>,
     {
         let value = val.value();
         Self::set_raw_value(value);
@@ -241,7 +249,8 @@ pub trait Register: Sized {
     }
 
     unsafe fn get_bit<B>(bit: B) -> bool
-        where B: Bit<Register=Self, ReadAccess=Readable>
+    where
+        B: Bit<Register = Self, ReadAccess = Readable>,
     {
         let bit = Self::DataType::ONE << bit.bit_id();
 
@@ -249,14 +258,16 @@ pub trait Register: Sized {
     }
 
     unsafe fn set_bits<V>(bits: V)
-        where V: SetValueType<Register=Self, WriteAccess=Writable>,
+    where
+        V: SetValueType<Register = Self, WriteAccess = Writable>,
     {
         let val = Self::get_value();
         Self::set_raw_value(val | bits.value());
     }
 
     unsafe fn clear_bits<V>(bits: V)
-        where V: SetValueType<Register=Self, WriteAccess=Writable>,
+    where
+        V: SetValueType<Register = Self, WriteAccess = Writable>,
     {
         let val = Self::get_value();
         Self::set_raw_value(val & !bits.value());
@@ -274,7 +285,6 @@ pub trait Register: Sized {
 
 // Unfortunately, all the traits above make actually defining a register and its bits something that no sane
 // person should do. Fortunately, because the definitions are very regular, macros can be used.
-
 
 /// Used in the `reg_named_bits` macro for expanding the read access declarations. It allows the other macros
 /// to just match the access flags as a token tree, and have this expand it.
@@ -308,7 +318,7 @@ macro_rules! expand_write_access {
 /// macro allows the user to declare a whole register's bits using an enum-like representation.
 #[macro_export]
 macro_rules! reg_named_bits {
-    ( 
+    (
         $reg:ident : $type:ty {
             $( $(#[$bit_doc:meta])* $bit:ident = $id:expr, $acc:tt;)+
         }
@@ -367,7 +377,7 @@ macro_rules! reg_bit_consts {
         }
     ) => {
         impl $struct_name {
-            $( 
+            $(
                 $(#[$bit_doc])*
                 #[allow(dead_code)]
                 pub const $bit: $bit = $bit;

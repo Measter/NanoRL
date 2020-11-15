@@ -1,10 +1,13 @@
 //! This stuff is needed because the project is no_std. It's stuck in here because Rust-Analyser shows
 //! "duplicate lang item" errors, and I didn't want to see them in my main.rs.
 
-use crate::hal::{delay_millis, ports::{Port, PortB, PinMode}};
+use crate::hal::{
+    delay_millis,
+    ports::{PinMode, Port, PortB},
+};
 
 #[lang = "eh_personality"]
-extern fn eh_personality() {}
+extern "C" fn eh_personality() {}
 
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
@@ -28,7 +31,7 @@ pub unsafe extern "C" fn abort() {
 pub unsafe extern "C" fn memset(s: *mut u8, c: i16, n: usize) {
     let c = c as u8;
     let n = n as isize;
-    
+
     for i in 0..n {
         s.offset(i).write(c);
     }

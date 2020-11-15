@@ -4,10 +4,7 @@
 //! so we'll hide it away in here.
 
 use crate::{
-    hal::{
-        ports::PortD,
-        clock::Instant,
-    },
+    hal::{clock::Instant, ports::PortD},
     peripherals::button::Button,
 };
 

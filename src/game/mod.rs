@@ -1,12 +1,12 @@
-pub mod tiles;
-pub mod rng;
 mod input;
+pub mod rng;
+pub mod tiles;
 pub use input::Input;
 
 use crate::{
     hal::{
-        twi::{TWI, TWIError},
         progmem::PGMSlice,
+        twi::{TWIError, TWI},
     },
     peripherals::display::{self, Display},
 };
@@ -40,28 +40,26 @@ pub enum Tile {
 impl Tile {
     pub fn graphic(self) -> PGMSlice {
         let (addr, len) = match self {
-            Tile::Floor     => (&tiles::FLOOR as *const u8, tiles::FLOOR.len()),
-            Tile::Wall      => (&tiles::WALL as *const u8, tiles::WALL.len()),
-            Tile::Stairs    => (&tiles::STAIRS as *const u8, tiles::STAIRS.len()),
-            Tile::Player    => (&tiles::PLAYER as *const u8, tiles::PLAYER.len()),
-            Tile::Enemy     => (&tiles::ENEMY as *const u8, tiles::ENEMY.len()),
+            Tile::Floor => (&tiles::FLOOR as *const u8, tiles::FLOOR.len()),
+            Tile::Wall => (&tiles::WALL as *const u8, tiles::WALL.len()),
+            Tile::Stairs => (&tiles::STAIRS as *const u8, tiles::STAIRS.len()),
+            Tile::Player => (&tiles::PLAYER as *const u8, tiles::PLAYER.len()),
+            Tile::Enemy => (&tiles::ENEMY as *const u8, tiles::ENEMY.len()),
         };
 
-        unsafe {
-            PGMSlice::from_raw_parts(addr, len)
-        }
+        unsafe { PGMSlice::from_raw_parts(addr, len) }
     }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 struct Position {
-    x: u8, 
-    y: u8
+    x: u8,
+    y: u8,
 }
 
 impl Position {
     fn new(x: u8, y: u8) -> Self {
-        Self {x, y}
+        Self { x, y }
     }
 }
 
@@ -100,9 +98,7 @@ impl Game {
     }
 
     pub fn game_over_screen() -> PGMSlice {
-        unsafe {
-            PGMSlice::from_raw_parts(&tiles::GAME_OVER as *const u8, tiles::GAME_OVER.len())
-        }
+        unsafe { PGMSlice::from_raw_parts(&tiles::GAME_OVER as *const u8, tiles::GAME_OVER.len()) }
     }
 
     pub fn get_digit_tile(digit: u8) -> PGMSlice {
@@ -120,9 +116,7 @@ impl Game {
             _ => (&tiles::FLOOR as *const u8, tiles::FLOOR.len()),
         };
 
-        unsafe {
-            PGMSlice::from_raw_parts(ptr, len)
-        }
+        unsafe { PGMSlice::from_raw_parts(ptr, len) }
     }
 
     pub fn new() -> Self {
@@ -130,7 +124,7 @@ impl Game {
             player_pos: Position::new(0, 0),
             level: 0,
             enemies: [None; NUM_ENEMIES],
-            map: Map([Tile::Floor; LEVEL_SIZE * LEVEL_SIZE])
+            map: Map([Tile::Floor; LEVEL_SIZE * LEVEL_SIZE]),
         }
     }
 
@@ -144,7 +138,7 @@ impl Game {
 
     pub fn update(&mut self, input: &Input) -> ContinueState {
         match self.handle_player(input) {
-            ContinueState::Continue => {},
+            ContinueState::Continue => {}
             state => return state,
         }
 
@@ -155,7 +149,7 @@ impl Game {
         for e in self.enemies.iter_mut().filter_map(|e| e.as_mut()) {
             let dir_row = get_dir(e.position.y, self.player_pos.y);
             let dir_col = get_dir(e.position.x, self.player_pos.x);
-            
+
             // Check if we're next to the player. If we are, then hit the player, killing them.
             if self.player_pos == Position::new(e.position.x + dir_col, e.position.y)
                 || self.player_pos == Position::new(e.position.x, e.position.y + dir_row)
@@ -170,7 +164,7 @@ impl Game {
             }
 
             // Check the player's location again, as if we don't the enemy can end up moving
-            // diagonally into the player, without actually attacking. So we should only do 
+            // diagonally into the player, without actually attacking. So we should only do
             // this second stage of the move if the player isn't there either.
             // We don't actually want to attack, as enemies can't attack on a diagonal.
 
@@ -204,10 +198,12 @@ impl Game {
         match tile {
             Tile::Wall => return ContinueState::RestartLoop,
             Tile::Stairs => return ContinueState::NewLevel,
-            _ => {},
+            _ => {}
         }
 
-        let enemy=  self.enemies.iter_mut()
+        let enemy = self
+            .enemies
+            .iter_mut()
             .find(|e| matches!(e, Some(e) if e.position == next_pos));
 
         // If there's an enemy, kill it.
@@ -231,9 +227,10 @@ impl Game {
         let offset_x = (self.player_pos.x as usize)
             .saturating_sub(SCREEN_WIDTH / 2)
             .min(SCREEN_MAX_X);
-        
-        
-        let rows = self.map.0
+
+        let rows = self
+            .map
+            .0
             .chunks_exact(LEVEL_SIZE)
             .skip(offset_y)
             .zip(0..)
@@ -251,23 +248,21 @@ impl Game {
             twi,
             &Tile::Player.graphic(),
             self.player_pos.x - offset_x as u8,
-            self.player_pos.y - offset_y as u8
+            self.player_pos.y - offset_y as u8,
         )?;
 
         // The player is always on screen, so no fancy logic was needed. But for the enemies
         // we need to filter out those that aren't on screen.
-        let enemies = self.enemies.iter()
-            .filter_map(Option::as_ref)
-            .filter(|e| 
-                (offset_x as u8..(offset_x+SCREEN_WIDTH) as u8).contains(&e.position.x)
-                && (offset_y as u8..(offset_y+SCREEN_HEIGHT) as u8).contains(&e.position.y)
-        );
+        let enemies = self.enemies.iter().filter_map(Option::as_ref).filter(|e| {
+            (offset_x as u8..(offset_x + SCREEN_WIDTH) as u8).contains(&e.position.x)
+                && (offset_y as u8..(offset_y + SCREEN_HEIGHT) as u8).contains(&e.position.y)
+        });
         for e in enemies {
             display.draw_tile(
                 twi,
                 &Tile::Enemy.graphic(),
                 e.position.x - offset_x as u8,
-                e.position.y - offset_y as u8
+                e.position.y - offset_y as u8,
             )?;
         }
 
@@ -292,16 +287,16 @@ impl Game {
         // Need to place two doors. One on the left side of the vertical wall, one on the right.
         let door_col = rng.next_range(1, col);
         self.map[(door_col, row)] = Tile::Floor;
-        
-        let door_col = rng.next_range(col+1, LEVEL_SIZE as u8 - 1);
+
+        let door_col = rng.next_range(col + 1, LEVEL_SIZE as u8 - 1);
         self.map[(door_col, row)] = Tile::Floor;
 
         draw_vertical_wall(&mut self.map.0, col as usize);
         // Likewise vertically.
         let door_row = rng.next_range(1, row);
         self.map[(col, door_row)] = Tile::Floor;
-        
-        let door_row = rng.next_range(row+1, LEVEL_SIZE as u8 - 1);
+
+        let door_row = rng.next_range(row + 1, LEVEL_SIZE as u8 - 1);
         self.map[(col, door_row)] = Tile::Floor;
 
         // Placing the stairs.
@@ -316,21 +311,19 @@ impl Game {
         let enemy_count = NUM_ENEMIES.min(self.level as usize);
         let mut enemies = self.enemies.iter_mut();
         for e in (&mut enemies).take(enemy_count) {
-            *e = Some( Enemy {
+            *e = Some(Enemy {
                 position: place(&self.map, rng),
             })
         }
 
-        // Empty the remaining enemies. 
+        // Empty the remaining enemies.
         enemies.for_each(|e| *e = None);
     }
 }
 
 /// This function's return value takes advantage of overflow to represent the -1 state.
 fn get_dir(enemy: u8, player: u8) -> u8 {
-    player.checked_sub(enemy)
-        .map(|i| i.min(1))
-        .unwrap_or(255)
+    player.checked_sub(enemy).map(|i| i.min(1)).unwrap_or(255)
 }
 
 fn place(map: &Map, rng: &mut rng::Rng) -> Position {

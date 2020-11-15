@@ -18,17 +18,17 @@
 
 #[macro_use]
 pub mod register;
+pub mod clock;
 pub mod ports;
+pub mod progmem;
 pub mod twi;
 pub mod usart;
-pub mod clock;
-pub mod progmem;
 
 const CPU_FREQ: u32 = 16_000_000;
 
 pub fn enable_interrupts() {
     unsafe {
-        llvm_asm!{
+        llvm_asm! {
             "sei"
             :
             :
@@ -40,7 +40,7 @@ pub fn enable_interrupts() {
 
 pub fn disable_interrupts() {
     unsafe {
-        llvm_asm!{
+        llvm_asm! {
             "cli"
             :
             :
@@ -74,14 +74,13 @@ pub fn delay_millis(mut ms: u16) {
 /// Its intended use is for the `delay_millis` function, so that it doesn't depend
 /// on a timer being configured.
 ///
-/// This was copied from the Arduino library's implementation, with the parts for 
+/// This was copied from the Arduino library's implementation, with the parts for
 /// other CPU frequencies ripped out.
 #[inline(never)]
 pub fn delay_micros(mut us: u16) {
-
     // This function assumes a 16MHz clock.
     // Call = 4 cycles + 2 to 4 cycles to init `us` (2 for constant delay, 4 for variable)
-    
+
     // For a one-microsecond delay, simply return. The overhoad of the function call
     // takes 14 (16) cycles, which is 1us.
 
@@ -99,7 +98,7 @@ pub fn delay_micros(mut us: u16) {
 
     // Busy wait.
     unsafe {
-        llvm_asm!{
+        llvm_asm! {
             "1: sbiw $0,1
             brne 1b"
             : "={r24}"(us)
@@ -121,7 +120,7 @@ pub fn delay_micros(mut us: u16) {
 ///
 /// It uses pin PB5, which my Arduino Nano has an onboard LED connected to.
 pub fn blink_error_code(code: u8) -> ! {
-    use ports::{PortB, Port, PinMode};
+    use ports::{PinMode, Port, PortB};
     PortB::set_pin_mode(PortB::PB5, PinMode::Output);
 
     loop {
@@ -129,11 +128,7 @@ pub fn blink_error_code(code: u8) -> ! {
 
         for _ in 0..6 {
             let bit = code & 0x1;
-            let blink_len = if bit == 0 {
-                100
-            } else {
-                250
-            };
+            let blink_len = if bit == 0 { 100 } else { 250 };
 
             PortB::set_port_high(PortB::PB5);
             delay_millis(blink_len);

@@ -20,14 +20,13 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-
 #![allow(dead_code)]
 
 use crate::hal::{
-    CPU_FREQ,
-    register::Register,
-    ports::registers::{PORTC, DDRC},
+    ports::registers::{DDRC, PORTC},
     progmem::ByteBundle,
+    register::Register,
+    CPU_FREQ,
 };
 
 pub const BUFFER_LEN: usize = 32;
@@ -73,49 +72,49 @@ pub mod registers {
     #[repr(u8)]
     pub enum TWSRStatus {
         // All Master
-        Start               = 0x08,
-        RepStart            = 0x10,
+        Start = 0x08,
+        RepStart = 0x10,
 
         // Master Transmitter
-        MtSlaAck            = 0x18,
-        MtDataAck           = 0x28,
-        MtSlaNack           = 0x20,
-        MtDataNack          = 0x30,
-        MtArbLost           = 0x38,
+        MtSlaAck = 0x18,
+        MtDataAck = 0x28,
+        MtSlaNack = 0x20,
+        MtDataNack = 0x30,
+        MtArbLost = 0x38,
 
         // Master Receiver
-        MrDataAck           = 0x50,
-        MrSlaAck            = 0x40,
-        MrDataNack          = 0x58,
-        MrSlaNack           = 0x48,
+        MrDataAck = 0x50,
+        MrSlaAck = 0x40,
+        MrDataNack = 0x58,
+        MrSlaNack = 0x48,
 
         // Slave Receiver
-        SrSlaAck            = 0x60,
-        SrGCallAck          = 0x70,
-        SrArbLostSlaAck     = 0x68,
-        SrArbLostGCallAck   = 0x78,
-        SrDataAck           = 0x80,
-        SrGCallDataAck      = 0x90,
-        SrStop              = 0xA0,
-        SrDataNack          = 0x88,
-        SrGCallDataNack     = 0x98,
+        SrSlaAck = 0x60,
+        SrGCallAck = 0x70,
+        SrArbLostSlaAck = 0x68,
+        SrArbLostGCallAck = 0x78,
+        SrDataAck = 0x80,
+        SrGCallDataAck = 0x90,
+        SrStop = 0xA0,
+        SrDataNack = 0x88,
+        SrGCallDataNack = 0x98,
 
         // Slave Transmitter
-        StSlaAck            = 0xA8,
-        StArbLostSlaAck     = 0xB0,
-        StDataAck           = 0xB8,
-        StDataNack          = 0xC0,
-        StLastData          = 0xC8,
-        
+        StSlaAck = 0xA8,
+        StArbLostSlaAck = 0xB0,
+        StDataAck = 0xB8,
+        StDataNack = 0xC0,
+        StLastData = 0xC8,
+
         // All
-        NoInfo              = 0xF8,
-        BusError            = 0x00,
+        NoInfo = 0xF8,
+        BusError = 0x00,
     }
 
     impl TWSR {
         pub fn status() -> TWSRStatus {
             use crate::hal::register::Register;
-            
+
             let mask = TWSR::TWS0 | TWSR::TWS1 | TWSR::TWS2 | TWSR::TWS3 | TWSR::TWS4;
 
             // SAFETY: The returned enum encompasses all states the hardware can supply as per the
@@ -126,7 +125,7 @@ pub mod registers {
             }
         }
     }
-    
+
     reg! {
         /// TWI (Slave) Address Register
         TWAR: u8 {
@@ -198,7 +197,7 @@ impl Buffer {
     }
 
     /// Replaces the contents of the buffer with the input data.
-    fn set<T: ByteBundle + ?Sized> (&mut self, data: &T) -> Result<(), TWIError> {
+    fn set<T: ByteBundle + ?Sized>(&mut self, data: &T) -> Result<(), TWIError> {
         if BUFFER_LEN < data.length() {
             Err(TWIError::BufferLenError)
         } else {
@@ -342,7 +341,7 @@ impl TWI {
     /// Waits for the transmission to finish before returning.
     pub fn write<T: ByteBundle + ?Sized>(&mut self, data: &T) -> Result<(), TWIError> {
         // SAFETY: Assumes that there is only one instance of TWI.
-        unsafe { 
+        unsafe {
             // In our limited implementation, the bus should be in the Ready state when we get here.
             if TWI_GLOBAL.state() != TWIState::Ready {
                 return Err(TWIError::NotReady);
@@ -362,8 +361,7 @@ impl TWI {
             // between each check as we don't change it here, and optimize us into an infinite
             // loop.
             // This is undesireable.
-            while TWI_GLOBAL.state() == TWIState::Transmitting {
-            }
+            while TWI_GLOBAL.state() == TWIState::Transmitting {}
 
             match TWI_GLOBAL.error() {
                 TWSRStatus::NoInfo => Ok(()),

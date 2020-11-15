@@ -6,13 +6,13 @@
 //! This results in the match handler being executed when TCNT0 matchs
 //! OCR0A, and then TCNT0 being reset.
 //!
-//! The interface is modelled after the Rust stdlib's Instant in that 
+//! The interface is modelled after the Rust stdlib's Instant in that
 //! it's an opaque thing representing a moment in time.
 //!
 //! Cannot represent durations of more than 2^16 ms (approx. 65 seconds),
 //! which is enough for this application.
 
-use crate::hal::{CPU_FREQ, register::Register};
+use crate::hal::{register::Register, CPU_FREQ};
 use core::marker::PhantomData;
 
 pub mod registers {
@@ -153,10 +153,10 @@ impl Clock {
                 TCCR0A::set_value(TCCR0A::WGM01);
                 // Enable the OCRA interrupt.
                 TIMSK0::set_bits(TIMSK0::OCIEA);
-                
+
                 TCNT0::set_raw_value(0);
                 OCR0A::set_raw_value(OCR0A_VALUE);
-                
+
                 // Configure the prescaler for 64.
                 TCCR0B::set_value(TCCR0B::CS00 | TCCR0B::CS01);
                 HAS_INIT = true;
