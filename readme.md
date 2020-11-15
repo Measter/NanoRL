@@ -12,7 +12,7 @@ I only implemented the peripherals I needed to get things working (though with a
 
 ## Compiler, and Building
 
-I used the x86-64 MSVC 2020-08-28 Nightly compiler to build this. The binary was built with the following command:
+I used the x86-64 MSVC 2020-11-11 Nightly compiler to build this. The binary was built with the following command:
 
     cargo build -Z build-std=core --target avr-atmega328p.json --release
 
